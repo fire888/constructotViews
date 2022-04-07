@@ -1,0 +1,54 @@
+a.app-button:hover,
+a.app-button:visited,
+a.app-button:active,
+a.app-button:link,
+button,
+a.app-button,
+.app-button {
+    text-decoration: none;
+    color: #379962;
+    display: inline-block;
+    padding: 2px 5px;
+    border: 1px solid #1d4c35;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 1px 1px 1px 1px;
+    background-color: rgba(20, 41, 31, 0.79);
+    user-select: none;
+    min-height: 15px;
+}
+
+
+.app-button.current {
+    background: #327956;
+    color: #f3ecaf;
+}
+
+.app-button:hover {
+    background: #153426;
+    color: #9a9875;
+}
+
+.app-button.current:hover {
+    background: #1c9358;
+    color: #f3ecaf;
+}
+
+
+.app-button.color-alert {
+    background-color: #4b0101;
+    color: #a1987b;
+    border: 1px solid #a1987b;
+}
+
+
+.closeOpenApp {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.row-space-between {
+    display: flex;
+    justify-content: space-between;
+}

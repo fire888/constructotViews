@@ -1,0 +1,7 @@
+#app {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 100;
+    color: #11a748;
+}
