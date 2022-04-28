@@ -1,0 +1,16 @@
+.popup-body {
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    color: #1c9358;
+    background-color: #162b20;
+    border: 1px solid #1c9358;
+    border-radius: 5px;
+    padding: 30px;
+    position: relative;
+    min-height: 100px;
+    min-width: 200px;
+}

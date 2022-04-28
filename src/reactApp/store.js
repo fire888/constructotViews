@@ -1,28 +1,15 @@
 import { makeAutoObservable, toJS } from 'mobx';
 
 export const storeApp = makeAutoObservable({
-    gamesList: [
-        'AAAAA',
-        'AAAAA',
-        'AAAAA',
-        'AAAAA',
-    ],
-    fillGames: arr => {
-        storeApp.gamesList = arr
+    gamesList: [],
+    currentGame: null,
+    popupAddGameIsOpened: false,
+    popupDelGameIsOpened: false,
+    popupEditGameIsOpened: false,
+    setGamesList (list) {
+        this.gamesList.clear()
+        for (let i = 0; i < list.length; ++i) {
+            this.gamesList.push(list[i])
+        }
     },
-    get gamesAll() {
-        return this.gamesList
-    }
 })
-
-
-console.log(toJS(storeApp.gamesList))
-//storeApp.fillGames([ 'BBBBB' ])
-storeApp.gamesList[0] = 'BBBB'
-console.log(toJS(storeApp.gamesList))
-// setTimeout(() => {
-//
-//     setTimeout(() => {
-//         console.log(toJS(storeApp.gamesList))
-//     }, 500)
-// },2000)

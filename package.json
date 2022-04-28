@@ -6,8 +6,8 @@
   "author": "",
   "license": "ISC",
   "scripts": {
-    "build": "webpack --mode=production --config webpackConfig/webpack.config.js",
-    "dev": "webpack serve --mode=development --config webpackConfig/webpack.config.js"
+    "build": "set BACKEND_HOST=null && webpack --mode=production --config webpackConfig/webpack.config.js",
+    "dev": "set BACKEND_HOST=http://localhost:3005 && webpack serve --mode=development --config webpackConfig/webpack.config.js"
   },
   "dependencies": {
     "@babel/core": "^7.17.9",

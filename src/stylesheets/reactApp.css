@@ -1,7 +1,60 @@
 #app {
+    color: #1c9358;
+}
+
+.list {
+    min-width: 150px;
+    display: flex;
+    flex-direction: column;
+}
+
+.inline {
+    display: flex;
+    flex-direction: row;
+}
+
+.stretch {
+    justify-content: stretch;
+}
+
+
+.h-10 {
+    min-height: 10px;
+}
+.h-30 {
+    min-height: 30px;
+}
+.h-50 {
+    min-height: 50px;
+}
+
+.w-150 {
+    min-width: 150px;
+}
+
+.full-window-dark {
+    z-index: 10;
     position: absolute;
     left: 0;
+    right: 0;
     top: 0;
-    z-index: 100;
-    color: #11a748;
+    bottom: 0;
+    background-color: #00000050;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    display: flex;
 }
+
+.pos-right-top {
+    position: absolute;
+    right: 3px;
+    top: 3px;
+}
+
+/*.pos-right-top {*/
+/*    position: absolute;*/
+/*    right: 3px;*/
+/*    top: 3px;*/
+/*}*/
+
