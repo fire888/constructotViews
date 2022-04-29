@@ -4,117 +4,170 @@ import { AppButton} from '../components/button'
 import { Popup } from "../components/popup";
 import '../../stylesheets/view-project-list.css'
 import { toJS, action } from 'mobx';
-import { storeApp } from '../store'
+import { storeGamesList } from '../Store/GamesList'
+import { storeGameProps } from '../Store/GameProperties'
 import { sendResponse } from '../../toServerApi/toServerApi'
 
-//
-// const updateListGamesFromServer = () => {
-//     sendResponse('get-list-projects', null, r => storeApp.setGamesList(r.list))
-// }
-// const removeProjectAndUpdateList = (id, callback) => {
-//     sendResponse('remove-project', { id }, () => {
-//         updateListGamesFromServer()
-//         callback()
-//     })
-// }
-// const addProjectAndUpdateList = data => {
-//     sendResponse('add-project', data, () => {
-//         updateListGamesFromServer()
-//     })
-// }
-// const editProjectAndUpdateList = (data, callback) => {
-//     sendResponse('edit-project', data, () => {
-//         updateListGamesFromServer()
-//         callback()
-//     })
-// }
-// updateListGamesFromServer()
-//
 
-//let n = 0
+const TYPES_LAYERS = [
+    'slotMachine',
+    'element',
+    'background',
+]
 
-const ProjectProperties = observer(() => {
 
-    if (!storeApp.currentGame) {
-        return (<></>)
+export const updateListLayersFromServer = id => {
+    sendResponse('get-project-props', { id }, r => {
+        storeGameProps.setLayersList(r.props)
+    })
+}
+const editListLayersAndUpdateList = (idProject, layers, callback = () => {}) => {
+    sendResponse('edit-project-props', { id: idProject, layers }, () => {
+        updateListLayersFromServer(idProject)
+        callback()
+    })
+}
+const moveLayer = (keyMove, id) => {
+    let currentIndex
+    let newIndex
+
+    for (let i = 0; i < storeGameProps.layers.length; i++) {
+        if (id === storeGameProps.layers[i].id) {
+            currentIndex = i
+        }
     }
 
-    const itemData = storeApp.gamesList.filter(item => item.id === storeApp.currentGame)[0]
+    if (keyMove === 'top') {
+        if (currentIndex === 0) {
+            return;
+        }
+        newIndex = currentIndex - 1
+    }
+    if (keyMove === 'bottom') {
+        if (currentIndex === storeGameProps.layers.length - 1) {
+            return;
+        }
+        newIndex = currentIndex + 1
+    }
 
+    const targetData = storeGameProps.layers[newIndex]
+    const currentData = storeGameProps.layers[currentIndex]
+
+    const copyArr = JSON.parse(JSON.stringify(storeGameProps.layers))
+    copyArr[newIndex] = currentData
+    copyArr[currentIndex] = targetData
+
+    editListLayersAndUpdateList(storeGamesList.currentGameID, copyArr)
+}
+
+
+
+const ProjectProperties = observer(() => {
+    if (!storeGamesList.currentGameID) {
+        return (<></>)
+    }
+    const itemData = storeGamesList.gamesList.filter(item => item.id === storeGamesList.currentGameID)[0]
     return (
-        <div className={'project-properties list'}>
-            <div className='h-50' />
-            <div>{itemData.id}</div>
-            <div>{itemData.name}</div>
-            {/*<div className='area project-list'>*/}
-            {/*    projects:*/}
-            {/*    <div className='list'>*/}
-            {/*        {storeApp.gamesList.map((project, i) => (*/}
-            {/*            <ProjectView projectItem={project} key={i} />*/}
-            {/*        ))}*/}
-            {/*    </div>*/}
+        <>
+            {storeGameProps.popupAddLayerIsOpened &&
+                <Popup
+                    rows={[
+                        { type: 'title', val: 'add new layer:', },
+                        { type: 'text', val: 'name:', },
+                        { type: 'input', val: 'layer-' + (storeGameProps.layers.length + 1), },
+                        { type: 'text', val: 'type:', },
+                        { type: 'dropdown', val: TYPES_LAYERS[0], arrOptions: TYPES_LAYERS }
+                    ]}
+                    callBackDone={data => {
+                        storeGameProps.popupAddLayerIsOpened = false
 
-            {/*    <div className='h-10' />*/}
+                        const newLayer = {
+                            id: 'id_layer_' + Math.floor(Math.random() * 100000),
+                            name: data[2],
+                            type: data[4],
+                        }
+                        const copyLayersData = JSON.parse(JSON.stringify(storeGameProps.layers))
+                        editListLayersAndUpdateList(itemData.id, [newLayer, ...copyLayersData])
+                    }}
+                    callBackCancel={action(() => {
+                        storeGameProps.popupAddLayerIsOpened = false
+                    })}
+                />}
 
-            {/*    <AppButton*/}
-            {/*        val='add new'*/}
-            {/*        callBackClick={action(() => {*/}
-            {/*            storeApp.currentGame = null*/}
-            {/*            storeApp.popupAddGameIsOpened = true*/}
-            {/*        })}/>*/}
-            {/*</div>*/}
-
-
-            {/*{storeApp.popupAddGameIsOpened &&*/}
-            {/*<Popup*/}
-            {/*    rows={[*/}
-            {/*        { type: 'title', val: 'add new game:', },*/}
-            {/*        { type: 'text', val: 'name:', },*/}
-            {/*        { type: 'input', val: '', },*/}
-            {/*    ]}*/}
-            {/*    callBackDone={data => {*/}
-            {/*        storeApp.popupAddGameIsOpened = false*/}
-            {/*        addProjectAndUpdateList({ id: 'id_' + Math.floor(Math.random() * 10000), name: data[2] })*/}
-            {/*    }}*/}
-            {/*    callBackCancel={action(() => {*/}
-            {/*        storeApp.popupAddGameIsOpened = false*/}
-            {/*    })}*/}
-            {/*/>}*/}
-
-            {/*{storeApp.popupDelGameIsOpened &&*/}
-            {/*<Popup*/}
-            {/*    rows={[*/}
-            {/*        { type: 'title', val: 'delete game:', },*/}
-            {/*        { type: 'text', val: storeApp.gamesList.filter(item => item.id === storeApp.currentGame)[0].name, },*/}
-            {/*    ]}*/}
-            {/*    callBackDone={() => {*/}
-            {/*        removeProjectAndUpdateList(storeApp.currentGame, action(() => {*/}
-            {/*            storeApp.popupDelGameIsOpened = false*/}
-            {/*        }))*/}
-            {/*    }}*/}
-            {/*    callBackCancel={action(() => {*/}
-            {/*        storeApp.popupDelGameIsOpened = false*/}
-            {/*    })}*/}
-            {/*/>}*/}
+            {storeGameProps.popupDelLayerIsOpened &&
+                <Popup
+                    rows={[
+                        { type: 'title', val: 'delete layer?', },
+                        { type: 'text', val: storeGameProps.layers.filter(item => item.id === storeGameProps.currentLayerID)[0].name, },
+                    ]}
+                    callBackDone={() => {
+                        const copyLayersData = storeGameProps.layers.filter(item => item.id !== storeGameProps.currentLayerID)
+                        editListLayersAndUpdateList(itemData.id, copyLayersData, () => {
+                            storeGameProps.popupDelLayerIsOpened = false
+                        })
+                    }}
+                    callBackCancel={action(() => {
+                        storeGameProps.popupDelLayerIsOpened = false
+                    })}
+                />}
 
 
-            {/*{storeApp.popupEditGameIsOpened &&*/}
-            {/*<Popup*/}
-            {/*    rows={[*/}
-            {/*        { type: 'title', val: 'edit game:', },*/}
-            {/*        { type: 'text', val: storeApp.gamesList.filter(item => item.id === storeApp.currentGame)[0].name, },*/}
-            {/*        { type: 'input', val: storeApp.gamesList.filter(item => item.id === storeApp.currentGame)[0].name, },*/}
-            {/*    ]}*/}
-            {/*    callBackDone={data => {*/}
-            {/*        editProjectAndUpdateList(*/}
-            {/*            { id: storeApp.currentGame, name: data[2] },*/}
-            {/*            action(() => storeApp.popupEditGameIsOpened = false)*/}
-            {/*        )*/}
-            {/*    }}*/}
-            {/*    callBackCancel={action(() => {*/}
-            {/*        storeApp.popupEditGameIsOpened = false*/}
-            {/*    })}*/}
-            {/*/>}*/}
+            <div className={'project-properties list'}>
+                <div className='h-50' />
+                <div>{itemData.id}</div>
+                <div>{itemData.name}</div>
+                <div className='h-50' />
+
+                <AppButton
+                    val='add new'
+                    callBackClick={action(() => {
+                        storeGameProps.currentLayerID = null
+                        storeGameProps.popupAddLayerIsOpened = true
+                    })}/>
+                <div className='h-10' />
+                <div>
+                    {storeGameProps.layers.map(item =>
+                        <LayerView
+                            key={Math.floor(Math.random() * 1000000)}
+                            layerItem={item} />
+                    )}
+                </div>
+            </div>
+        </>
+    )
+})
+
+
+
+const LayerView = observer(({ layerItem }) => {
+    return (
+        <div className='list'>
+            <div className='inline'>
+                <AppButton
+                    val='top'
+                    callBackClick={action(() => {
+                        storeGameProps.currentLayerID = layerItem.id
+                        moveLayer('top', layerItem.id)
+                    })}/>
+                <AppButton
+                    val='bottom'
+                    callBackClick={action(() => {
+                        storeGameProps.currentLayerID = layerItem.id
+                        moveLayer('bottom', layerItem.id)
+                    })}/>
+            </div>
+            <span>{layerItem.id}</span>
+            <span>{layerItem.type}</span>
+            <div className='inline'>
+                <span>{layerItem.name}</span>
+                <AppButton
+                    val='delete'
+                    callBackClick={action(() => {
+                        storeGameProps.currentLayerID = layerItem.id
+                        storeGameProps.popupDelLayerIsOpened = true
+                    })}/>
+            </div>
+            <div className='h-10' />
         </div>
     )
 })
@@ -122,7 +175,4 @@ const ProjectProperties = observer(() => {
 
 
 
-
-
-
-export const createProjectProperties = () => (<ProjectProperties/>)
+export const createViewProjectProperties = () => (<ProjectProperties/>)

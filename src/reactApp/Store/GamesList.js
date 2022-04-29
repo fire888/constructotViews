@@ -1,8 +1,8 @@
 import { makeAutoObservable, toJS } from 'mobx';
 
-export const storeApp = makeAutoObservable({
+export const storeGamesList = makeAutoObservable({
     gamesList: [],
-    currentGame: null,
+    currentGameID: null,
     popupAddGameIsOpened: false,
     popupDelGameIsOpened: false,
     popupEditGameIsOpened: false,

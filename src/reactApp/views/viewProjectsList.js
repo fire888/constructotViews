@@ -4,12 +4,13 @@ import { AppButton} from '../components/button'
 import { Popup } from "../components/popup";
 import '../../stylesheets/view-project-list.css'
 import { toJS, action } from 'mobx';
-import { storeApp } from '../store'
+import { storeGamesList } from '../Store/GamesList'
 import { sendResponse } from '../../toServerApi/toServerApi'
+import { updateListLayersFromServer } from './viewProjectProperties'
 
 
 const updateListGamesFromServer = () => {
-    sendResponse('get-list-projects', null, r => storeApp.setGamesList(r.list))
+    sendResponse('get-list-projects', null, r => storeGamesList.setGamesList(r.list))
 }
 const removeProjectAndUpdateList = (id, callback) => {
     sendResponse('remove-project', { id }, () => {
@@ -31,7 +32,6 @@ const editProjectAndUpdateList = (data, callback) => {
 updateListGamesFromServer()
 
 
-let n = 0
 
 const ProjectsListView = observer(() => {
     return (
@@ -41,8 +41,8 @@ const ProjectsListView = observer(() => {
 
                 projects:
                 <div className='list'>
-                    {storeApp.gamesList.map((project, i) => (
-                        <ProjectView projectItem={project} key={i} />
+                    {storeGamesList.gamesList.map((project, i) => (
+                        <ProjectView projectItem={project} key={Math.floor(Math.random() * 1000)} />
                     ))}
                 </div>
 
@@ -51,13 +51,13 @@ const ProjectsListView = observer(() => {
                 <AppButton
                     val='add new'
                     callBackClick={action(() => {
-                        storeApp.currentGame = null
-                        storeApp.popupAddGameIsOpened = true
+                        storeGamesList.currentGameID = null
+                        storeGamesList.popupAddGameIsOpened = true
                     })}/>
             </div>
 
 
-            {storeApp.popupAddGameIsOpened &&
+            {storeGamesList.popupAddGameIsOpened &&
                 <Popup
                     rows={[
                         { type: 'title', val: 'add new game:', },
@@ -65,47 +65,47 @@ const ProjectsListView = observer(() => {
                         { type: 'input', val: '', },
                     ]}
                     callBackDone={data => {
-                        storeApp.popupAddGameIsOpened = false
-                        addProjectAndUpdateList({ id: 'id_' + Math.floor(Math.random() * 10000), name: data[2] })
+                        storeGamesList.popupAddGameIsOpened = false
+                        addProjectAndUpdateList({ id: 'id_' + Math.floor(Math.random() * 100000000), name: data[2] })
                     }}
                     callBackCancel={action(() => {
-                        storeApp.popupAddGameIsOpened = false
+                        storeGamesList.popupAddGameIsOpened = false
                     })}
                 />}
 
-            {storeApp.popupDelGameIsOpened &&
+            {storeGamesList.popupDelGameIsOpened &&
                 <Popup
                     rows={[
                         { type: 'title', val: 'delete game:', },
-                        { type: 'text', val: storeApp.gamesList.filter(item => item.id === storeApp.currentGame)[0].name, },
+                        { type: 'text', val: storeGamesList.gamesList.filter(item => item.id === storeGamesList.currentGameID)[0].name, },
                     ]}
                     callBackDone={() => {
-                        removeProjectAndUpdateList(storeApp.currentGame, action(() => {
-                            storeApp.currentGame = null
-                            storeApp.popupDelGameIsOpened = false
+                        removeProjectAndUpdateList(storeGamesList.currentGameID, action(() => {
+                            storeGamesList.currentGameID = null
+                            storeGamesList.popupDelGameIsOpened = false
                         }))
                     }}
                     callBackCancel={action(() => {
-                        storeApp.popupDelGameIsOpened = false
+                        storeGamesList.popupDelGameIsOpened = false
                     })}
                 />}
 
 
-            {storeApp.popupEditGameIsOpened &&
+            {storeGamesList.popupEditGameIsOpened &&
                 <Popup
                     rows={[
                         { type: 'title', val: 'edit game:', },
-                        { type: 'text', val: storeApp.gamesList.filter(item => item.id === storeApp.currentGame)[0].name, },
-                        { type: 'input', val: storeApp.gamesList.filter(item => item.id === storeApp.currentGame)[0].name, },
+                        { type: 'text', val: storeGamesList.gamesList.filter(item => item.id === storeGamesList.currentGameID)[0].name, },
+                        { type: 'input', val: storeGamesList.gamesList.filter(item => item.id === storeGamesList.currentGameID)[0].name, },
                     ]}
                     callBackDone={data => {
                         editProjectAndUpdateList(
-                            { id: storeApp.currentGame, name: data[2] },
-                            action(() => storeApp.popupEditGameIsOpened = false)
+                            { id: storeGamesList.currentGameID, name: data[2] },
+                            action(() => storeGamesList.popupEditGameIsOpened = false)
                         )
                     }}
                     callBackCancel={action(() => {
-                        storeApp.popupEditGameIsOpened = false
+                        storeGamesList.popupEditGameIsOpened = false
                     })}
                 />}
         </div>
@@ -119,21 +119,31 @@ const ProjectView = observer(({ projectItem }) => {
         <div className='inline stretch'>
             <AppButton
                 val={projectItem.name}
-                classNameCustom={projectItem.id === storeApp.currentGame ? 'current' : ''}
-                callBackClick={action(() => storeApp.currentGame = projectItem.id)} />
+                classNameCustom={projectItem.id === storeGamesList.currentGameID ? 'current' : ''}
+                callBackClick={action(() => {
+                    storeGamesList.currentGameID = projectItem.id
+                    updateListLayersFromServer(projectItem.id)
+                })} />
 
-            {storeApp.currentGame === projectItem.id &&
+            {storeGamesList.currentGameID === projectItem.id &&
                 <>
                     <AppButton
                         val={'del'}
                         callBackClick={action(() => {
-                            storeApp.popupDelGameIsOpened = true
+                            storeGamesList.popupDelGameIsOpened = true
                         })} />
 
                     <AppButton
                         val={'edit'}
                         callBackClick={action(() => {
-                            storeApp.popupEditGameIsOpened = true
+                            storeGamesList.popupEditGameIsOpened = true
+                        })} />
+
+                    <AppButton
+                        val={'duplicate'}
+                        callBackClick={action(() => {
+                            console.log('TODO add DUPLICATE')
+                            //storeGamesList.popupEditGameIsOpened = true
                         })} />
                 </>}
         </div>
@@ -143,4 +153,4 @@ const ProjectView = observer(({ projectItem }) => {
 
 
 
-export const createProjectsListView = () => (<ProjectsListView />)
+export const createViewProjectsList = () => (<ProjectsListView />)

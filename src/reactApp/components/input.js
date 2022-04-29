@@ -17,7 +17,5 @@ export function AppInput (props) {
         props.onChange(event.target.value)
     }
 
-    return (
-        <input type="text" name="name" value={inputValue} onChange={changeHandler} />
-    )
+    return (<input type="text" name="name" value={inputValue} onChange={changeHandler} />)
 }
