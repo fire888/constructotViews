@@ -1,24 +1,68 @@
 import * as React from 'react'
+import { toJS, action } from 'mobx'
 import { observer } from "mobx-react-lite"
+
+import { storeLayers } from '../Store/storeLayers'
+import { storePopup } from '../Store/StorePopup'
+
 import { AppButton} from '../components/button'
-import '../../stylesheets/view-project-list.css'
-import { toJS, action } from 'mobx';
-import { storeGamesList } from '../Store/GamesList'
-import { storeGameProps } from '../Store/GameProperties'
 import { sendResponse } from '../../toServerApi/toServerApi'
-import {storePopup} from "../Store/StorePopup";
 
 
-export const getListLayersFromServer = id => {
-    sendResponse('get-screen-layers', { id }, r => {
-        storeGameProps.setLayersList(r.props)
+
+
+export const toggleShowLayersList = (id = null, callback = () => {}) => {
+    storeLayers.currentLayersID = id
+    if (id) {
+        getLayersListFromServer(id, callback)
+    }
+}
+
+
+export const createNewLayersList = (callback) => {
+    const newLayerID = 'layersID_' + Math.floor(Math.random() * 1000000000000)
+    sendResponse('add-new-layers-list', { id: newLayerID }, () => {
+        callback(newLayerID)
     })
 }
 
 
-const editListLayersAndUpdateList = (layersID, layers, callback = () => {}) => {
-    sendResponse('edit-screen-layers', { id: layersID, layers }, () => {
-        getListLayersFromServer(layersID)
+export const removeLayersList = (id, callback) => {
+    storeLayers.currentLayersID = null
+    sendResponse('remove-layers', { id }, callback)
+}
+
+
+export const duplicateLayersList = (id, callback) => {
+    const newLayersListId = 'layersID_' + Math.floor(Math.random() * 1000000000000)
+
+    toggleShowLayersList(id, layersData => {
+        const newLayers = JSON.parse(JSON.stringify(layersData))
+        for (let i = 0; i < newLayers.length; ++i) {
+            newLayers[i].id = 'id_layer_' + Math.floor(Math.random() * 100000)
+        }
+        sendResponse('add-new-layers-list', { id: newLayersListId, layers: newLayers }, () => {
+            toggleShowLayersList(newLayersListId, () => {
+                callback(newLayersListId)
+            })
+        })
+    })
+}
+
+
+
+
+const getLayersListFromServer = (id, callback = () => {}) => {
+    sendResponse('get-layers', { id }, r => {
+        storeLayers.setLayersList(r.props)
+        callback(r.props)
+    })
+}
+
+
+const editLayersListAndUpdateList = (layersID, layers, callback = () => {}) => {
+    sendResponse('edit-layers', { id: layersID, layers }, () => {
+        getLayersListFromServer(layersID)
         callback()
     })
 }
@@ -47,12 +91,10 @@ const addNewLayer = () => {
                 name: data[2],
                 type: data[4],
             }
-            const copyLayersData = JSON.parse(JSON.stringify(storeGameProps.layers))
-            const gameData = storeGamesList.gamesList.filter(item => item.id === storeGamesList.currentGameID)[0]
-            const screenData = gameData.screens.filter(item => item.id === storeGamesList.currentScreenID)[0]
-            editListLayersAndUpdateList(toJS(screenData.layersID), [newLayer, ...copyLayersData], action(() => {
+            const copyLayersData = JSON.parse(JSON.stringify(storeLayers.layers))
+            editLayersListAndUpdateList(toJS(storeLayers.currentLayersID), [newLayer, ...copyLayersData], action(() => {
                 storePopup.clearAll()
-                storeGameProps.currentLayerID = null
+                storeLayers.currentLayerID = null
             }))
         },
         action(() => storePopup.clearAll()),
@@ -63,14 +105,12 @@ const openDeleteLayerPopup = () => {
     storePopup.setData(
         [
             { type: 'title', val: 'delete layer ?', },
-            { type: 'text', val: 'name:' + storeGameProps.layers.filter(item => item.id === storeGameProps.currentLayerID)[0].name, },
+            { type: 'text', val: 'name:' + storeLayers.layers.filter(item => item.id === storeLayers.currentLayerID)[0].name, },
         ],
         () => {
-            const copyLayersData = storeGameProps.layers.filter(item => item.id !== storeGameProps.currentLayerID)
-            const gameData = storeGamesList.gamesList.filter(item => item.id === storeGamesList.currentGameID)[0]
-            const screenData = gameData.screens.filter(item => item.id === storeGamesList.currentScreenID)[0]
-            storeGameProps.currentLayerID = null
-            editListLayersAndUpdateList(screenData.layersID, copyLayersData, () => {
+            const copyLayersData = storeLayers.layers.filter(item => item.id !== storeLayers.currentLayerID)
+            storeLayers.currentLayerID = null
+            editLayersListAndUpdateList(storeLayers.currentLayersID, copyLayersData, () => {
                 storePopup.clearAll()
             })
         },
@@ -80,16 +120,12 @@ const openDeleteLayerPopup = () => {
 
 
 
-
-
-
-
 const moveLayer = (keyMove, id) => {
     let currentIndex
     let newIndex
 
-    for (let i = 0; i < storeGameProps.layers.length; i++) {
-        if (id === storeGameProps.layers[i].id) {
+    for (let i = 0; i < storeLayers.layers.length; i++) {
+        if (id === storeLayers.layers[i].id) {
             currentIndex = i
         }
     }
@@ -101,30 +137,28 @@ const moveLayer = (keyMove, id) => {
         newIndex = currentIndex - 1
     }
     if (keyMove === 'bottom') {
-        if (currentIndex === storeGameProps.layers.length - 1) {
+        if (currentIndex === storeLayers.layers.length - 1) {
             return;
         }
         newIndex = currentIndex + 1
     }
 
-    const targetData = storeGameProps.layers[newIndex]
-    const currentData = storeGameProps.layers[currentIndex]
+    const targetData = storeLayers.layers[newIndex]
+    const currentData = storeLayers.layers[currentIndex]
 
-    const copyArr = JSON.parse(JSON.stringify(storeGameProps.layers))
+    const copyArr = JSON.parse(JSON.stringify(storeLayers.layers))
     copyArr[newIndex] = currentData
     copyArr[currentIndex] = targetData
 
 
-    const gameData = storeGamesList.gamesList.filter(item => item.id === storeGamesList.currentGameID)[0]
-    const screenData = gameData.screens.filter(item => item.id === storeGamesList.currentScreenID)[0]
 
-    editListLayersAndUpdateList(screenData.layersID, copyArr)
+    editLayersListAndUpdateList(storeLayers.currentLayersID, copyArr)
 }
 
 
 
 const ScreenLayers = observer(() => {
-    if (!storeGamesList.currentScreenID) {
+    if (!storeLayers.currentLayersID) {
         return (<></>)
     }
     return (
@@ -138,7 +172,7 @@ const ScreenLayers = observer(() => {
 
             <div className={'h-10'} />
 
-            {storeGameProps.layers.map(item =>
+            {storeLayers.layers.map(item =>
                 <LayerView
                     key={Math.floor(Math.random() * 1000000)}
                     layerItem={item} />
@@ -156,13 +190,13 @@ const LayerView = observer(({ layerItem }) => {
                 <AppButton
                     val='top'
                     callBackClick={action(() => {
-                        storeGameProps.currentLayerID = layerItem.id
+                        storeLayers.currentLayerID = layerItem.id
                         moveLayer('top', layerItem.id)
                     })}/>
                 <AppButton
                     val='bottom'
                     callBackClick={action(() => {
-                        storeGameProps.currentLayerID = layerItem.id
+                        storeLayers.currentLayerID = layerItem.id
                         moveLayer('bottom', layerItem.id)
                     })}/>
             </div>
@@ -172,7 +206,7 @@ const LayerView = observer(({ layerItem }) => {
             <AppButton
                 val='delete'
                 callBackClick={action(() => {
-                    storeGameProps.currentLayerID = layerItem.id
+                    storeLayers.currentLayerID = layerItem.id
                     openDeleteLayerPopup()
                 })}/>
             <div className='h-10' />

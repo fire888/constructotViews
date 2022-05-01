@@ -1,18 +1,8 @@
 import { makeAutoObservable, toJS } from 'mobx';
 
-export const storeGameProps = makeAutoObservable({
-    layers: [
-        {
-            id: '111111',
-            name: 'aaaa',
-            type: 'img',
-        },
-        {
-            id: '2222',
-            name: 'bbbbb',
-            type: 'img',
-        },
-    ],
+export const storeLayers = makeAutoObservable({
+    layers: [],
+    currentLayersID: null,
     currentLayerID: null,
     popupAddLayerIsOpened: false,
     popupDelLayerIsOpened: false,

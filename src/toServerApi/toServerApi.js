@@ -6,10 +6,11 @@ const PATHS = {
     'edit-project': `${ HOST }/api/edit-project`,
     'get-list-projects': `${ HOST }/api/get-list-projects`,
 
-    'add-screen-layers': `${ HOST }/api/add-screen-layers`,
-    'remove-screen-layers': `${ HOST }/api/remove-screen-layers`,
-    'edit-screen-layers': `${ HOST }/api/edit-screen-layers`,
-    'get-screen-layers': `${ HOST }/api/get-screen-layers`,
+
+    'get-layers': `${ HOST }/api/get-layers`,
+    'add-new-layers-list': `${ HOST }/api/add-new-layers-list`,
+    'remove-layers': `${ HOST }/api/remove-layers`,
+    'edit-layers': `${ HOST }/api/edit-layers`,
 }
 
 
@@ -39,6 +40,7 @@ const defaultOnDenied = (mess, response) => console.log('denied' + mess, respons
 
 
 export function sendResponse (key, data, onDone, offDone) {
+    console.log(key)
     const body = JSON.stringify({...data})
     const params = Object.assign({}, reqParams.post, { body })
 

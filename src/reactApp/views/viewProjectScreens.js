@@ -5,17 +5,10 @@ import '../../stylesheets/view-project-list.css'
 import { toJS, action } from 'mobx';
 import { storeGamesList } from '../Store/GamesList'
 import { storePopup } from "../Store/StorePopup";
-import { sendResponse } from '../../toServerApi/toServerApi'
 import { editProjectAndUpdateList } from './viewProjectsList'
-import { getListLayersFromServer } from './viewScreenLayers'
+import { toggleShowLayersList, createNewLayersList, removeLayersList, duplicateLayersList } from './viewLayers'
 
 
-const sendAddScreenLayers = (data, callback) => {
-    sendResponse('add-screen-layers', data, callback)
-}
-const sendDeleteScreenLayers = (data, callback) => {
-    sendResponse('remove-screen-layers', data, callback)
-}
 
 /** ACTIONS ON HTML ****************************************************************/
 
@@ -36,15 +29,16 @@ const openPopupAddScreen = action(() => {
             if (!copy.screens) {
                 copy.screens = []
             }
-            const layersID = 'layers_ID_' + Math.floor(Math.random() * 100000000)
-            copy.screens.push({
-                id: 'screen_id_' + Math.floor(Math.random() * 100000000),
-                name: data[2],
-                layersID,
-            })
-            editProjectAndUpdateList(copy, () => {
-                sendAddScreenLayers({ id: layersID })
-                storePopup.clearAll()
+            createNewLayersList(layersID => {
+                copy.screens.push({
+                    id: 'screen_id_' + Math.floor(Math.random() * 100000000),
+                    name: data[2],
+                    layersID,
+                })
+                editProjectAndUpdateList(copy, () => {
+                    toggleShowLayersList(null)
+                    storePopup.clearAll()
+                })
             })
         },
         action(() => storePopup.clearAll()),
@@ -90,7 +84,7 @@ const openPopupDelProject = action(() => {
             const copyProjectData = JSON.parse(JSON.stringify(currentProject))
             copyProjectData.screens = copyProjectData.screens.filter(item => item.id !== currentScreen.id)
             editProjectAndUpdateList(copyProjectData, action(() => {
-                sendDeleteScreenLayers({ id: currentScreen.layersID }, () => {
+                removeLayersList(currentScreen.layersID, () => {
                     storePopup.clearAll()
                 })
             }))
@@ -113,19 +107,19 @@ const openPopupDuplicateProject = action(() => {
             if (data[2] === currentScreen.name || data[2] === '') {
                 return;
             }
-            const copyProjectData = JSON.parse(JSON.stringify(currentProject))
-            const newLayersId = 'layers_ID_' + Math.floor(Math.random() * 100000000)
-            copyProjectData.screens.push({
-                id: 'screen_id_' + Math.floor(Math.random() * 100000000),
-                name: data[2],
-                layersID: newLayersId,
-            })
-            editProjectAndUpdateList(copyProjectData, action(() => {
-                sendAddScreenLayers({ id: newLayersId }, action(() => {
-                    storeGamesList.currentScreenID = null
+            duplicateLayersList(currentScreen.layersID, newLayersID => {
+                const copyProjectData = JSON.parse(JSON.stringify(currentProject))
+                const newScreenID = 'screen_id_' + Math.floor(Math.random() * 100000000)
+                copyProjectData.screens.push({
+                   id: newScreenID,
+                   name: data[2],
+                   layersID: newLayersID,
+                })
+                editProjectAndUpdateList(copyProjectData, action(() => {
                     storePopup.clearAll()
+                    storeGamesList.currentScreenID = newScreenID
                 }))
-            }))
+            })
         },
         action(() => storePopup.clearAll()),
     )
@@ -174,7 +168,7 @@ const ScreenView = observer(({ screenItem }) => {
                 val={screenItem.name}
                 classNameCustom={isCurrent ? 'current' : ''}
                 callBackClick={action(() => {
-                    getListLayersFromServer(screenItem.layersID)
+                    toggleShowLayersList(screenItem.layersID)
                     storeGamesList.currentScreenID = screenItem.id
                 })} />
 

@@ -1,10 +1,12 @@
 import * as React from 'react'
+import { toJS, action } from 'mobx';
 import { observer } from "mobx-react-lite"
 import { AppButton} from '../components/button'
 import '../../stylesheets/view-project-list.css'
-import { toJS, action } from 'mobx';
+
 import { storeGamesList } from '../Store/GamesList'
 import { storePopup } from "../Store/StorePopup";
+
 import { sendResponse } from '../../toServerApi/toServerApi'
 import { mapFunctionToData } from '../helpers/pipelines'
 
