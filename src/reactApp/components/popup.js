@@ -4,7 +4,7 @@ import { AppButton } from "./button";
 import { AppInput } from "./input";
 import { toJS, action } from 'mobx';
 import { AppDropDown } from "./dropdown";
-import { storePopup } from '../Store/StorePopup'
+import { storePopup } from '../Store/storePopup'
 import {observer} from "mobx-react-lite";
 
 let savedState = []

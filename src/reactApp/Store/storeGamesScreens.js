@@ -1,6 +1,6 @@
 import { makeAutoObservable } from 'mobx';
 
-export const storeGamesList = makeAutoObservable({
+export const storeGamesScreens = makeAutoObservable({
     gamesList: [],
     currentGameID: null,
     currentScreenID: null,

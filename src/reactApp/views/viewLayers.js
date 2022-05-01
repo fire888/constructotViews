@@ -3,7 +3,7 @@ import { toJS, action } from 'mobx'
 import { observer } from "mobx-react-lite"
 
 import { storeLayers } from '../Store/storeLayers'
-import { storePopup } from '../Store/StorePopup'
+import { storePopup } from '../Store/storePopup'
 
 import { AppButton} from '../components/button'
 import { sendResponse } from '../../toServerApi/toServerApi'
@@ -28,6 +28,7 @@ export const createNewLayersList = (callback) => {
 
 
 export const removeLayersList = (id, callback) => {
+    console.log('---', id)
     storeLayers.currentLayersID = null
     sendResponse('remove-layers', { id }, callback)
 }
@@ -167,7 +168,7 @@ const ScreenLayers = observer(() => {
             <div className={'h-10'} />
 
             <AppButton
-                val='add new'
+                val='add new layer'
                 callBackClick={addNewLayer} />
 
             <div className={'h-10'} />

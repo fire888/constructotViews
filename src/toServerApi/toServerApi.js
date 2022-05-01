@@ -1,10 +1,10 @@
 const HOST = BACKEND_HOST.trim()
 
 const PATHS = {
-    'add-project': `${ HOST }/api/add-project`,
-    'remove-project': `${ HOST }/api/remove-project`,
-    'edit-project': `${ HOST }/api/edit-project`,
-    'get-list-projects': `${ HOST }/api/get-list-projects`,
+    'add-game': `${ HOST }/api/add-game`,
+    'remove-game': `${ HOST }/api/remove-game`,
+    'edit-game': `${ HOST }/api/edit-game`,
+    'get-games': `${ HOST }/api/get-games`,
 
 
     'get-layers': `${ HOST }/api/get-layers`,

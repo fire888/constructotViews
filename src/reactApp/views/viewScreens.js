@@ -3,17 +3,62 @@ import { observer } from "mobx-react-lite"
 import { AppButton} from '../components/button'
 import '../../stylesheets/view-project-list.css'
 import { toJS, action } from 'mobx';
-import { storeGamesList } from '../Store/GamesList'
-import { storePopup } from "../Store/StorePopup";
-import { editProjectAndUpdateList } from './viewProjectsList'
+import { storeGamesScreens } from '../Store/storeGamesScreens'
+import { storePopup } from "../Store/storePopup";
+import { editProjectAndUpdateList } from './viewGames'
 import { toggleShowLayersList, createNewLayersList, removeLayersList, duplicateLayersList } from './viewLayers'
+import { mapFunctionToData } from "../helpers/pipelines";
+
+
+export const deleteScreens = (gameID, callback) => {
+    const screens = storeGamesScreens.gamesList.filter(item => item.id === gameID)[0].screens
+    const screensCopy = JSON.parse(JSON.stringify(toJS(screens)))
+
+    const dataToMap = []
+    for (let i = 0; i < screensCopy.length; ++i) {
+        dataToMap.push([ screensCopy[i].layersID ])
+    }
+    mapFunctionToData(dataToMap, removeLayersList, () => {
+        callback()
+    })
+}
+
+
+export const setCurrentScreen = (id) => {
+    if (id === null) {
+        storeGamesScreens.currentScreenID = null
+        toggleShowLayersList(null)
+    }
+}
+
+export const duplicateScreens = (gameID, callback) => {
+    const screensData = JSON.parse(JSON.stringify(toJS(storeGamesScreens.gamesList.filter(item => item.id === gameID)[0].screens)))
+
+    console.log(screensData)
+    const dataToMap = []
+    for (let i = 0; i < screensData.length; ++i) {
+         dataToMap.push([ screensData[i].layersID ])
+    }
+    mapFunctionToData(dataToMap, duplicateLayersList, arrResults => {
+        const newScreens = []
+        for (let i = 0; i < screensData.length; ++i) {
+            newScreens.push({
+                id: 'screen_id_' + Math.floor(Math.random() * 100000000),
+                name: screensData[i].name,
+                layersID: arrResults[i],
+            })
+        }
+        callback(newScreens)
+    })
+}
+
 
 
 
 /** ACTIONS ON HTML ****************************************************************/
 
 const openPopupAddScreen = action(() => {
-    storeGamesList.currentScreenID = null
+    storeGamesScreens.currentScreenID = null
     storePopup.setData(
         [
             { type: 'title', val: 'add new screen to game:', },
@@ -24,7 +69,7 @@ const openPopupAddScreen = action(() => {
             if (data[2] === '') {
                 return;
             }
-            const currentProject = toJS(storeGamesList.gamesList.filter(item => item.id === storeGamesList.currentGameID)[0])
+            const currentProject = toJS(storeGamesScreens.gamesList.filter(item => item.id === storeGamesScreens.currentGameID)[0])
             const copy = JSON.parse(JSON.stringify(currentProject))
             if (!copy.screens) {
                 copy.screens = []
@@ -35,19 +80,19 @@ const openPopupAddScreen = action(() => {
                     name: data[2],
                     layersID,
                 })
-                editProjectAndUpdateList(copy, () => {
+                editProjectAndUpdateList(copy, action(() => {
                     toggleShowLayersList(null)
                     storePopup.clearAll()
-                })
+                }))
             })
         },
         action(() => storePopup.clearAll()),
     )
 })
 
-const openPopupEditProject = action(() => {
-    const currentProject = toJS(storeGamesList.gamesList.filter(item => item.id === storeGamesList.currentGameID)[0])
-    const currentScreen = currentProject.screens.filter(item => item.id === storeGamesList.currentScreenID)[0]
+const openPopupEditScreen = action(() => {
+    const currentProject = toJS(storeGamesScreens.gamesList.filter(item => item.id === storeGamesScreens.currentGameID)[0])
+    const currentScreen = currentProject.screens.filter(item => item.id === storeGamesScreens.currentScreenID)[0]
 
     storePopup.setData(
          [
@@ -61,7 +106,7 @@ const openPopupEditProject = action(() => {
              }
             const copyProjectData = JSON.parse(JSON.stringify(currentProject))
             for (let i = 0; i < copyProjectData.screens.length; ++i) {
-                if (copyProjectData.screens[i].id === storeGamesList.currentScreenID) {
+                if (copyProjectData.screens[i].id === storeGamesScreens.currentScreenID) {
                     copyProjectData.screens[i].name = data[2]
                 }
             }
@@ -71,9 +116,9 @@ const openPopupEditProject = action(() => {
     )
 })
 
-const openPopupDelProject = action(() => {
-    const currentProject = toJS(storeGamesList.gamesList.filter(item => item.id === storeGamesList.currentGameID)[0])
-    const currentScreen = currentProject.screens.filter(item => item.id === storeGamesList.currentScreenID)[0]
+const openPopupDelScreen = action(() => {
+    const currentProject = toJS(storeGamesScreens.gamesList.filter(item => item.id === storeGamesScreens.currentGameID)[0])
+    const currentScreen = currentProject.screens.filter(item => item.id === storeGamesScreens.currentScreenID)[0]
 
     storePopup.setData(
         [
@@ -93,9 +138,9 @@ const openPopupDelProject = action(() => {
     )
 })
 
-const openPopupDuplicateProject = action(() => {
-    const currentProject = toJS(storeGamesList.gamesList.filter(item => item.id === storeGamesList.currentGameID)[0])
-    const currentScreen = currentProject.screens.filter(item => item.id === storeGamesList.currentScreenID)[0]
+const openPopupDuplicateScreen = action(() => {
+    const currentProject = toJS(storeGamesScreens.gamesList.filter(item => item.id === storeGamesScreens.currentGameID)[0])
+    const currentScreen = currentProject.screens.filter(item => item.id === storeGamesScreens.currentScreenID)[0]
 
     storePopup.setData(
         [
@@ -117,7 +162,7 @@ const openPopupDuplicateProject = action(() => {
                 })
                 editProjectAndUpdateList(copyProjectData, action(() => {
                     storePopup.clearAll()
-                    storeGamesList.currentScreenID = newScreenID
+                    storeGamesScreens.currentScreenID = newScreenID
                 }))
             })
         },
@@ -128,10 +173,10 @@ const openPopupDuplicateProject = action(() => {
 /** HTML *****************************************************************/
 
 const ScreensListView = observer(() => {
-    if (!storeGamesList.currentGameID) {
+    if (!storeGamesScreens.currentGameID) {
         return (<></>)
     }
-    const projectData = storeGamesList.gamesList.filter(item => item.id === storeGamesList.currentGameID)[0]
+    const projectData = storeGamesScreens.gamesList.filter(item => item.id === storeGamesScreens.currentGameID)[0]
     const screens = projectData.screens || []
 
     return (
@@ -159,7 +204,7 @@ const ScreensListView = observer(() => {
 
 
 const ScreenView = observer(({ screenItem }) => {
-    const isCurrent = storeGamesList.currentScreenID === screenItem.id
+    const isCurrent = storeGamesScreens.currentScreenID === screenItem.id
     return (
         <div>
             {isCurrent && <div className='h-10'/>}
@@ -169,14 +214,14 @@ const ScreenView = observer(({ screenItem }) => {
                 classNameCustom={isCurrent ? 'current' : ''}
                 callBackClick={action(() => {
                     toggleShowLayersList(screenItem.layersID)
-                    storeGamesList.currentScreenID = screenItem.id
+                    storeGamesScreens.currentScreenID = screenItem.id
                 })} />
 
             {isCurrent &&
                 <div className='inline stretch'>
-                    <AppButton val={'edit'} callBackClick={openPopupEditProject} />
-                    <AppButton val={'del'} callBackClick={openPopupDelProject} />
-                    <AppButton val={'duplicate'} callBackClick={openPopupDuplicateProject} />
+                    <AppButton val={'edit'} callBackClick={openPopupEditScreen} />
+                    <AppButton val={'del'} callBackClick={openPopupDelScreen} />
+                    <AppButton val={'duplicate'} callBackClick={openPopupDuplicateScreen} />
                 </div>}
 
             {isCurrent && <div className='h-10'/>}
