@@ -4,20 +4,18 @@ import { AppButton} from '../components/button'
 import '../../stylesheets/view-project-list.css'
 import { toJS, action } from 'mobx';
 import { storeGamesList } from '../Store/GamesList'
-import { storeGameProps } from "../Store/GameProperties";
 import { storePopup } from "../Store/StorePopup";
 import { sendResponse } from '../../toServerApi/toServerApi'
-import { updateListLayersFromServer, editListLayersAndUpdateList  } from './viewProjectProperties'
+import { mapFunctionToData } from '../helpers/pipelines'
 
 
 /** TO SERVER AND RETURN RESPONSE ************************/
 
 const updateListGamesFromServer = (callback = () => {}) => {
-    sendResponse('get-list-projects', null, r => {
-        console.log(r)
+    sendResponse('get-list-projects', null, action(r => {
         storeGamesList.setGamesList(r.list)
         callback()
-    })
+    }))
 }
 
 const addProjectAndUpdateList = (data, callback = () => {}) => {
@@ -36,28 +34,76 @@ const validateNewProject = data => {
 }
 
 
+
 const duplicateProjectAndUpdateList = (data, callback) => {
-    const existingCurrentProjectDataCopy = JSON.parse(JSON.stringify(storeGameProps.layers))
-    addProjectAndUpdateList(data, () => {
-        editListLayersAndUpdateList(data.id, existingCurrentProjectDataCopy, action(() => {
-            storeGamesList.currentGameID = data.id
+    const projectData = storeGamesList.gamesList.filter(item => item.id === storeGamesList.currentGameID)[0]
+    const projectDataCopy = JSON.parse(JSON.stringify(toJS(projectData)))
+
+    /** create new screens data copy **********/
+    const dataToMapDuplicateScreens = []
+    if (projectDataCopy.screens && projectDataCopy.screens.length > 0) {
+        for (let i = 0; i < projectDataCopy.screens.length; ++i) {
+            dataToMapDuplicateScreens.push({
+                ...projectDataCopy.screens[i],
+                id: 'screen_id_' + Math.floor(Math.random() * 100000000),
+                layersID: 'layers_ID_' + Math.floor(Math.random() * 100000000),
+            })
+        }
+    }
+
+    const newProjectId = 'project_id_' + Math.floor(Math.random() * 1000000000)
+    const newProjectData = {
+        ...projectDataCopy,
+        name: data.name,
+        id: newProjectId,
+        screens: dataToMapDuplicateScreens
+    }
+
+    addProjectAndUpdateList(newProjectData, () => {
+        storeGamesList.currentGameID = newProjectId
+
+        const createScreensToMap = []
+        for (let i = 0; i < dataToMapDuplicateScreens.length; ++i) {
+            createScreensToMap.push(['add-screen-layers', { id: dataToMapDuplicateScreens[i].layersID }])
+        }
+        mapFunctionToData(createScreensToMap, sendResponse, () => {
             callback()
-        }))
+        })
     })
 }
+
+
 export const editProjectAndUpdateList = (data, callback) => {
     sendResponse('edit-project', data, () => {
         updateListGamesFromServer()
         callback()
     })
 }
-const removeProjectAndUpdateList = (id, callback) => {
-    sendResponse('remove-project', { id }, () => {
-        updateListGamesFromServer()
-        callback()
-    })
+
+
+const removeProjectAndUpdateList = (data, callback) => {
+    const dataProject = toJS(data)
+
+    /** delete screens */
+    const dataToMapDeleteScreens = []
+    if (dataProject.screens && dataProject.screens.length > 0) {
+        for (let i = 0; i < data.screens.length; i++) {
+            if (data.screens[i] && data.screens[i].layersID) {
+                dataToMapDeleteScreens.push([ 'remove-screen-layers', { id: data.screens[i].layersID } ])
+            }
+        }
+    }
+    mapFunctionToData(dataToMapDeleteScreens,  sendResponse, () => {
+            /** delete project */
+            sendResponse('remove-project', { id: data.id }, () => {
+                updateListGamesFromServer()
+                callback()
+            })
+        }
+    )
 }
 updateListGamesFromServer()
+
 
 
 
@@ -100,14 +146,14 @@ const openPopupEditProject = action(() => {
 })
 
 const openPopupDelProject = action(() => {
-    const currentProjectName = storeGamesList.gamesList.filter(item => item.id === storeGamesList.currentGameID)[0].name
+    const currentProject = storeGamesList.gamesList.filter(item => item.id === storeGamesList.currentGameID)[0]
     storePopup.setData(
         [
             {type: 'title', val: 'delete game:',},
-            {type: 'text', val: currentProjectName ,},
+            {type: 'text', val: currentProject.name ,},
         ],
         () => {
-            removeProjectAndUpdateList(storeGamesList.currentGameID, action(() => {
+            removeProjectAndUpdateList(currentProject, action(() => {
                 storeGamesList.currentGameID = null
                 storePopup.clearAll()
             }))
@@ -129,7 +175,7 @@ const openPopupDuplicateProject = action(() => {
             if (data[3] === currentProjectName) {
                 return;
             }
-            duplicateProjectAndUpdateList({name: data[3]}, () => storePopup.clearAll())
+            duplicateProjectAndUpdateList({ name: data[3] }, () => storePopup.clearAll())
         }),
         action(() => storePopup.clearAll()),
     )
@@ -154,7 +200,7 @@ const ProjectsListView = observer(() => {
                 <div className='h-50' />
 
                 <AppButton
-                    val='add new'
+                    val='add new project'
                     callBackClick={openPopupAddProject}/>
             </div>
         </div>
@@ -174,8 +220,8 @@ const ProjectView = observer(({ projectItem }) => {
                 val={projectItem.name}
                 classNameCustom={isCurrent ? 'current' : ''}
                 callBackClick={action(() => {
+                    storeGamesList.currentScreenID = null
                     storeGamesList.currentGameID = projectItem.id
-                    // updateListLayersFromServer(projectItem.id)
                 })} />
 
             {isCurrent &&

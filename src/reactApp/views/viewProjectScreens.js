@@ -1,14 +1,13 @@
 import * as React from 'react'
 import { observer } from "mobx-react-lite"
 import { AppButton} from '../components/button'
-//import { Popup } from "../components/popup";
 import '../../stylesheets/view-project-list.css'
 import { toJS, action } from 'mobx';
 import { storeGamesList } from '../Store/GamesList'
-import { storeGameProps } from '../Store/GameProperties'
+import { storePopup } from "../Store/StorePopup";
 import { sendResponse } from '../../toServerApi/toServerApi'
-import {storePopup} from "../Store/StorePopup";
 import { editProjectAndUpdateList } from './viewProjectsList'
+import { getListLayersFromServer } from './viewScreenLayers'
 
 
 const sendAddScreenLayers = (data, callback) => {
@@ -155,7 +154,7 @@ const ScreensListView = observer(() => {
                 <div className='h-50' />
 
                 <AppButton
-                    val='add new'
+                    val='add new screen'
                     callBackClick={openPopupAddScreen} />
             </div>
         </div>
@@ -175,8 +174,8 @@ const ScreenView = observer(({ screenItem }) => {
                 val={screenItem.name}
                 classNameCustom={isCurrent ? 'current' : ''}
                 callBackClick={action(() => {
+                    getListLayersFromServer(screenItem.layersID)
                     storeGamesList.currentScreenID = screenItem.id
-                    // updateListLayersFromServer(projectItem.id)
                 })} />
 
             {isCurrent &&

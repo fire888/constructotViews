@@ -8,7 +8,8 @@ const PATHS = {
 
     'add-screen-layers': `${ HOST }/api/add-screen-layers`,
     'remove-screen-layers': `${ HOST }/api/remove-screen-layers`,
-    //'edit-project-props': `${ HOST }/api/edit-project-props`,
+    'edit-screen-layers': `${ HOST }/api/edit-screen-layers`,
+    'get-screen-layers': `${ HOST }/api/get-screen-layers`,
 }
 
 
@@ -43,20 +44,6 @@ export function sendResponse (key, data, onDone, offDone) {
 
     doFetch(PATHS[key], params, onDone || defaultOnSuccess, offDone || defaultOnDenied)
 }
-
-
-
-// export function uploadFile (key, fileData, onDone, offDone) {
-//     const body = new FormData()
-//     body.append('id', fileData.id)
-//     body.append('type', fileData.type)
-//     body.append('fileKey', fileData.type + '_' + fileData.id)
-//     body.append('file', fileData.file)
-//     const params = Object.assign({}, reqParams.postFiles, { body })
-//
-//     doFetch(PATHS[key], params, onDone || defaultOnSuccess, offDone || defaultOnDenied)
-// }
-
 
 
 const doFetch = (path, params, onSuccess, onDenied) => {

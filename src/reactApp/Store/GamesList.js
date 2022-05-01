@@ -1,4 +1,4 @@
-import { makeAutoObservable, toJS } from 'mobx';
+import { makeAutoObservable } from 'mobx';
 
 export const storeGamesList = makeAutoObservable({
     gamesList: [],

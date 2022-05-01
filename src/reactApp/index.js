@@ -2,7 +2,7 @@ import '../stylesheets/reactApp.css'
 import { createRoot } from 'react-dom/client';
 import * as React from 'react'
 import { createViewProjectsList } from './views/viewProjectsList'
-import { createViewProjectProperties } from './views/viewProjectProperties'
+import { createViewScreenLayers} from './views/viewScreenLayers'
 import { createViewProjectScreens } from "./views/viewProjectScreens";
 import { createPopup } from "./components/popup";
 
@@ -13,5 +13,5 @@ root.render(<>
         {createViewProjectsList()}
         {createViewProjectScreens()}
     </div>
-    {/*{createViewProjectProperties()}*/}
+    {createViewScreenLayers()}
 </>)
