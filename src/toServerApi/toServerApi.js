@@ -6,8 +6,9 @@ const PATHS = {
     'edit-project': `${ HOST }/api/edit-project`,
     'get-list-projects': `${ HOST }/api/get-list-projects`,
 
-    'get-project-props': `${ HOST }/api/get-project-props`,
-    'edit-project-props': `${ HOST }/api/edit-project-props`,
+    'add-screen-layers': `${ HOST }/api/add-screen-layers`,
+    'remove-screen-layers': `${ HOST }/api/remove-screen-layers`,
+    //'edit-project-props': `${ HOST }/api/edit-project-props`,
 }
 
 

@@ -1,7 +1,6 @@
 import * as React from 'react'
 import { observer } from "mobx-react-lite"
 import { AppButton} from '../components/button'
-import { Popup } from "../components/popup";
 import '../../stylesheets/view-project-list.css'
 import { toJS, action } from 'mobx';
 import { storeGamesList } from '../Store/GamesList'
@@ -21,11 +20,14 @@ export const updateListLayersFromServer = id => {
         storeGameProps.setLayersList(r.props)
     })
 }
-const editListLayersAndUpdateList = (idProject, layers, callback = () => {}) => {
-    sendResponse('edit-project-props', { id: idProject, layers }, () => {
-        updateListLayersFromServer(idProject)
-        callback()
-    })
+export const editListLayersAndUpdateList = (idProject, layers, callback = () => {}) => {
+    callback()
+
+    // sendResponse('edit-project-props', { id: idProject, layers }, () => {
+    //     console.log('!!!!---')
+    //     updateListLayersFromServer(idProject)
+    //     callback()
+    // })
 }
 const moveLayer = (keyMove, id) => {
     let currentIndex
@@ -69,47 +71,47 @@ const ProjectProperties = observer(() => {
     const itemData = storeGamesList.gamesList.filter(item => item.id === storeGamesList.currentGameID)[0]
     return (
         <>
-            {storeGameProps.popupAddLayerIsOpened &&
-                <Popup
-                    rows={[
-                        { type: 'title', val: 'add new layer:', },
-                        { type: 'text', val: 'name:', },
-                        { type: 'input', val: 'layer-' + (storeGameProps.layers.length + 1), },
-                        { type: 'text', val: 'type:', },
-                        { type: 'dropdown', val: TYPES_LAYERS[0], arrOptions: TYPES_LAYERS }
-                    ]}
-                    callBackDone={data => {
-                        storeGameProps.popupAddLayerIsOpened = false
+            {/*{storeGameProps.popupAddLayerIsOpened &&*/}
+            {/*    <Popup*/}
+            {/*        rows={[*/}
+            {/*            { type: 'title', val: 'add new layer:', },*/}
+            {/*            { type: 'text', val: 'name:', },*/}
+            {/*            { type: 'input', val: 'layer-' + (storeGameProps.layers.length + 1), },*/}
+            {/*            { type: 'text', val: 'type:', },*/}
+            {/*            { type: 'dropdown', val: TYPES_LAYERS[0], arrOptions: TYPES_LAYERS }*/}
+            {/*        ]}*/}
+            {/*        callBackDone={data => {*/}
+            {/*            storeGameProps.popupAddLayerIsOpened = false*/}
 
-                        const newLayer = {
-                            id: 'id_layer_' + Math.floor(Math.random() * 100000),
-                            name: data[2],
-                            type: data[4],
-                        }
-                        const copyLayersData = JSON.parse(JSON.stringify(storeGameProps.layers))
-                        editListLayersAndUpdateList(itemData.id, [newLayer, ...copyLayersData])
-                    }}
-                    callBackCancel={action(() => {
-                        storeGameProps.popupAddLayerIsOpened = false
-                    })}
-                />}
+            {/*            const newLayer = {*/}
+            {/*                id: 'id_layer_' + Math.floor(Math.random() * 100000),*/}
+            {/*                name: data[2],*/}
+            {/*                type: data[4],*/}
+            {/*            }*/}
+            {/*            const copyLayersData = JSON.parse(JSON.stringify(storeGameProps.layers))*/}
+            {/*            editListLayersAndUpdateList(itemData.id, [newLayer, ...copyLayersData])*/}
+            {/*        }}*/}
+            {/*        callBackCancel={action(() => {*/}
+            {/*            storeGameProps.popupAddLayerIsOpened = false*/}
+            {/*        })}*/}
+            {/*    />}*/}
 
-            {storeGameProps.popupDelLayerIsOpened &&
-                <Popup
-                    rows={[
-                        { type: 'title', val: 'delete layer?', },
-                        { type: 'text', val: storeGameProps.layers.filter(item => item.id === storeGameProps.currentLayerID)[0].name, },
-                    ]}
-                    callBackDone={() => {
-                        const copyLayersData = storeGameProps.layers.filter(item => item.id !== storeGameProps.currentLayerID)
-                        editListLayersAndUpdateList(itemData.id, copyLayersData, () => {
-                            storeGameProps.popupDelLayerIsOpened = false
-                        })
-                    }}
-                    callBackCancel={action(() => {
-                        storeGameProps.popupDelLayerIsOpened = false
-                    })}
-                />}
+            {/*{storeGameProps.popupDelLayerIsOpened &&*/}
+            {/*    <Popup*/}
+            {/*        rows={[*/}
+            {/*            { type: 'title', val: 'delete layer?', },*/}
+            {/*            { type: 'text', val: storeGameProps.layers.filter(item => item.id === storeGameProps.currentLayerID)[0].name, },*/}
+            {/*        ]}*/}
+            {/*        callBackDone={() => {*/}
+            {/*            const copyLayersData = storeGameProps.layers.filter(item => item.id !== storeGameProps.currentLayerID)*/}
+            {/*            editListLayersAndUpdateList(itemData.id, copyLayersData, () => {*/}
+            {/*                storeGameProps.popupDelLayerIsOpened = false*/}
+            {/*            })*/}
+            {/*        }}*/}
+            {/*        callBackCancel={action(() => {*/}
+            {/*            storeGameProps.popupDelLayerIsOpened = false*/}
+            {/*        })}*/}
+            {/*    />}*/}
 
 
             <div className={'project-properties list'}>
