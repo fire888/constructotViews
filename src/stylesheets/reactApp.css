@@ -5,7 +5,15 @@
 .left-panel {
     position: absolute;
     left: 0;
-    top: 0;
+    top: 5px;
+    display: flex;
+    flex-direction: row;
+}
+
+.right-panel {
+    position: absolute;
+    right: 0;
+    right: 0;
     display: flex;
     flex-direction: row;
 }

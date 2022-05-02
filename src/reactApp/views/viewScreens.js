@@ -1,13 +1,24 @@
 import * as React from 'react'
 import { observer } from "mobx-react-lite"
+import { toJS, action } from 'mobx';
+import { mapFunctionToData } from "../helpers/pipelines";
 import { AppButton} from '../components/button'
 import '../../stylesheets/view-project-list.css'
-import { toJS, action } from 'mobx';
+
 import { storeGamesScreens } from '../Store/storeGamesScreens'
 import { storePopup } from "../Store/storePopup";
-import { editProjectAndUpdateList } from './viewGames'
-import { toggleShowLayersList, createNewLayersList, removeLayersList, duplicateLayersList } from './viewLayers'
-import { mapFunctionToData } from "../helpers/pipelines";
+
+import {
+    editGameAndUpdateList
+} from './viewGames'
+import {
+    toggleShowLayersList,
+    createNewLayersList,
+    removeLayersList,
+    duplicateLayersList
+} from './viewLayers'
+
+
 
 
 export const deleteScreens = (gameID, callback) => {
@@ -34,7 +45,6 @@ export const setCurrentScreen = (id) => {
 export const duplicateScreens = (gameID, callback) => {
     const screensData = JSON.parse(JSON.stringify(toJS(storeGamesScreens.gamesList.filter(item => item.id === gameID)[0].screens)))
 
-    console.log(screensData)
     const dataToMap = []
     for (let i = 0; i < screensData.length; ++i) {
          dataToMap.push([ screensData[i].layersID ])
@@ -80,7 +90,7 @@ const openPopupAddScreen = action(() => {
                     name: data[2],
                     layersID,
                 })
-                editProjectAndUpdateList(copy, action(() => {
+                editGameAndUpdateList(copy, action(() => {
                     toggleShowLayersList(null)
                     storePopup.clearAll()
                 }))
@@ -91,8 +101,7 @@ const openPopupAddScreen = action(() => {
 })
 
 const openPopupEditScreen = action(() => {
-    const currentProject = toJS(storeGamesScreens.gamesList.filter(item => item.id === storeGamesScreens.currentGameID)[0])
-    const currentScreen = currentProject.screens.filter(item => item.id === storeGamesScreens.currentScreenID)[0]
+    const currentScreen = storeGamesScreens.getCurrentScreenData()
 
     storePopup.setData(
          [
@@ -104,21 +113,20 @@ const openPopupEditScreen = action(() => {
              if (data[2] === '') {
                  return;
              }
-            const copyProjectData = JSON.parse(JSON.stringify(currentProject))
-            for (let i = 0; i < copyProjectData.screens.length; ++i) {
-                if (copyProjectData.screens[i].id === storeGamesScreens.currentScreenID) {
-                    copyProjectData.screens[i].name = data[2]
+             const currentGameDataCopy = JSON.parse(JSON.stringify(toJS(storeGamesScreens.getCurrentGameData())))
+             for (let i = 0; i < currentGameDataCopy.screens.length; ++i) {
+                if (currentGameDataCopy.screens[i].id === storeGamesScreens.currentScreenID) {
+                    currentGameDataCopy.screens[i].name = data[2]
                 }
-            }
-            editProjectAndUpdateList(copyProjectData, action(() => storePopup.clearAll()))
+             }
+             editGameAndUpdateList(currentGameDataCopy, action(() => storePopup.clearAll()))
          },
          action(() => storePopup.clearAll()),
     )
 })
 
 const openPopupDelScreen = action(() => {
-    const currentProject = toJS(storeGamesScreens.gamesList.filter(item => item.id === storeGamesScreens.currentGameID)[0])
-    const currentScreen = currentProject.screens.filter(item => item.id === storeGamesScreens.currentScreenID)[0]
+    const currentScreen = storeGamesScreens.getCurrentScreenData()
 
     storePopup.setData(
         [
@@ -126,9 +134,9 @@ const openPopupDelScreen = action(() => {
             { type: 'text', val: currentScreen.name, },
         ],
         () => {
-            const copyProjectData = JSON.parse(JSON.stringify(currentProject))
-            copyProjectData.screens = copyProjectData.screens.filter(item => item.id !== currentScreen.id)
-            editProjectAndUpdateList(copyProjectData, action(() => {
+            const currentGameDataCopy = JSON.parse(JSON.stringify(toJS(storeGamesScreens.getCurrentGameData())))
+            currentGameDataCopy.screens = currentGameDataCopy.screens.filter(item => item.id !== currentScreen.id)
+            editGameAndUpdateList(currentGameDataCopy, action(() => {
                 removeLayersList(currentScreen.layersID, () => {
                     storePopup.clearAll()
                 })
@@ -139,8 +147,7 @@ const openPopupDelScreen = action(() => {
 })
 
 const openPopupDuplicateScreen = action(() => {
-    const currentProject = toJS(storeGamesScreens.gamesList.filter(item => item.id === storeGamesScreens.currentGameID)[0])
-    const currentScreen = currentProject.screens.filter(item => item.id === storeGamesScreens.currentScreenID)[0]
+    const currentScreen = storeGamesScreens.getCurrentScreenData()
 
     storePopup.setData(
         [
@@ -153,14 +160,14 @@ const openPopupDuplicateScreen = action(() => {
                 return;
             }
             duplicateLayersList(currentScreen.layersID, newLayersID => {
-                const copyProjectData = JSON.parse(JSON.stringify(currentProject))
+                const currentGameDataCopy = JSON.parse(JSON.stringify(toJS(storeGamesScreens.getCurrentGameData())))
                 const newScreenID = 'screen_id_' + Math.floor(Math.random() * 100000000)
-                copyProjectData.screens.push({
+                currentGameDataCopy.screens.push({
                    id: newScreenID,
                    name: data[2],
                    layersID: newLayersID,
                 })
-                editProjectAndUpdateList(copyProjectData, action(() => {
+                editGameAndUpdateList(currentGameDataCopy, action(() => {
                     storePopup.clearAll()
                     storeGamesScreens.currentScreenID = newScreenID
                 }))
@@ -176,8 +183,7 @@ const ScreensListView = observer(() => {
     if (!storeGamesScreens.currentGameID) {
         return (<></>)
     }
-    const projectData = storeGamesScreens.gamesList.filter(item => item.id === storeGamesScreens.currentGameID)[0]
-    const screens = projectData.screens || []
+    const currentGameData = storeGamesScreens.getCurrentGameData()
 
     return (
         <div>
@@ -185,7 +191,7 @@ const ScreensListView = observer(() => {
                 screens:
                 <div className='h-10' />
                 <div className='list'>
-                    {screens.map((screen, i) => (
+                    {currentGameData.screens.map((screen, i) => (
                         <ScreenView screenItem={screen} key={Math.floor(Math.random() * 1000000000)} />
                     ))}
                 </div>
@@ -231,4 +237,4 @@ const ScreenView = observer(({ screenItem }) => {
 
 
 
-export const createViewProjectScreens = () => (<ScreensListView />)
+export const createViewScreens = () => (<ScreensListView />)

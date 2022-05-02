@@ -1,6 +1,7 @@
 import { makeAutoObservable, toJS } from 'mobx';
 
 export const storeLayers = makeAutoObservable({
+    isOpened: true,
     layers: [],
     currentLayersID: null,
     currentLayerID: null,
@@ -12,4 +13,7 @@ export const storeLayers = makeAutoObservable({
             this.layers.push(list[i])
         }
     },
+    getCurrentLayerData () {
+        return this.layers.filter(item => item.id === this.currentLayerID)[0]
+    }
 })

@@ -4,6 +4,7 @@ import { observer } from "mobx-react-lite"
 
 import { storeLayers } from '../Store/storeLayers'
 import { storePopup } from '../Store/storePopup'
+import { toggleShowEditSlotMachine } from './viewEditSlotMachine'
 
 import { AppButton} from '../components/button'
 import { sendResponse } from '../../toServerApi/toServerApi'
@@ -11,12 +12,14 @@ import { sendResponse } from '../../toServerApi/toServerApi'
 
 
 
-export const toggleShowLayersList = (id = null, callback = () => {}) => {
+export const toggleShowLayersList = action((id = null, callback = () => {}) => {
+    toggleShowEditSlotMachine(null)
+    storeLayers.isOpened = true
     storeLayers.currentLayersID = id
     if (id) {
         getLayersListFromServer(id, callback)
     }
-}
+})
 
 
 export const createNewLayersList = (callback) => {
@@ -27,11 +30,10 @@ export const createNewLayersList = (callback) => {
 }
 
 
-export const removeLayersList = (id, callback) => {
-    console.log('---', id)
+export const removeLayersList = action((id, callback) => {
     storeLayers.currentLayersID = null
     sendResponse('remove-layers', { id }, callback)
-}
+})
 
 
 export const duplicateLayersList = (id, callback) => {
@@ -77,7 +79,7 @@ const TYPES_LAYERS = [
 ]
 
 
-const addNewLayer = () => {
+const addNewLayerPopup = () => {
     storePopup.setData(
         [
             { type: 'title', val: 'add new layer:', },
@@ -102,7 +104,7 @@ const addNewLayer = () => {
     )
 }
 
-const openDeleteLayerPopup = () => {
+const deleteLayerPopup = () => {
     storePopup.setData(
         [
             { type: 'title', val: 'delete layer ?', },
@@ -157,19 +159,38 @@ const moveLayer = (keyMove, id) => {
 }
 
 
+const saveNewLayerItemData = (id, newData) => {
+    const oldDataCopy = JSON.parse(JSON.stringify(toJS(storeLayers.getCurrentLayerData())))
+    const merged = {
+        ...oldDataCopy,
+        ...newData,
+    }
+    const copyLayersData = JSON.parse(JSON.stringify(toJS(storeLayers.layers)))
+    for (let i = 0; i < copyLayersData.length; ++i) {
+        if (copyLayersData[i].id === id) {
+            copyLayersData[i] = merged
+        }
+    }
+    editLayersListAndUpdateList(storeLayers.currentLayersID, copyLayersData)
+}
+
 
 const ScreenLayers = observer(() => {
+    if (!storeLayers.isOpened) {
+        return (<></>)
+    }
+
     if (!storeLayers.currentLayersID) {
         return (<></>)
     }
     return (
-        <div className='project-properties'>
+        <div >
             layers:
             <div className={'h-10'} />
 
             <AppButton
                 val='add new layer'
-                callBackClick={addNewLayer} />
+                callBackClick={addNewLayerPopup} />
 
             <div className={'h-10'} />
 
@@ -205,10 +226,22 @@ const LayerView = observer(({ layerItem }) => {
             <span>{layerItem.type}</span>
             <span>{layerItem.name}</span>
             <AppButton
+                val='edit'
+                callBackClick={action(() => {
+                    if (layerItem.type === 'slotMachine') {
+                        storeLayers.isOpened = false
+                        storeLayers.currentLayerID = layerItem.id
+                        toggleShowEditSlotMachine(layerItem.id, layerItem, action(newData => {
+                            storeLayers.isOpened = true
+                            saveNewLayerItemData(layerItem.id, newData)
+                        }))
+                    }
+                })}/>
+            <AppButton
                 val='delete'
                 callBackClick={action(() => {
                     storeLayers.currentLayerID = layerItem.id
-                    openDeleteLayerPopup()
+                    deleteLayerPopup()
                 })}/>
             <div className='h-10' />
         </div>
@@ -218,4 +251,4 @@ const LayerView = observer(({ layerItem }) => {
 
 
 
-export const createViewScreenLayers = () => (<ScreenLayers />)
+export const createViewLayers = () => (<ScreenLayers />)

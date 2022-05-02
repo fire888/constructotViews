@@ -3,8 +3,6 @@
  * func(...args, callback) - last argument must be function
  */
 export const mapFunctionToData = (data, func, callback) => {
-    console.log('555', data)
-
     const results = []
 
     let index = 0

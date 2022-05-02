@@ -1,17 +1,21 @@
 import '../stylesheets/reactApp.css'
 import { createRoot } from 'react-dom/client';
 import * as React from 'react'
-import { createViewProjectsList } from './views/viewGames'
-import { createViewScreenLayers} from './views/viewLayers'
-import { createViewProjectScreens } from "./views/viewScreens";
+import { createViewGamesList } from './views/viewGames'
+import { createViewLayers} from './views/viewLayers'
+import { createViewScreens } from "./views/viewScreens";
 import { createPopup } from "./components/popup";
+import { createEditSlotMachine } from './views/viewEditSlotMachine'
 
 const root = createRoot(document.getElementById("app"));
 root.render(<>
     {createPopup()}
     <div className='left-panel'>
-        {createViewProjectsList()}
-        {createViewProjectScreens()}
+        {createViewGamesList()}
+        {createViewScreens()}
     </div>
-    {createViewScreenLayers()}
+    <div className='right-panel'>
+        {createViewLayers()}
+        {createEditSlotMachine()}
+    </div>
 </>)

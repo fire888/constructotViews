@@ -21,7 +21,7 @@ const updateListGamesFromServer = (callback = () => {}) => {
     }))
 }
 
-const addProjectAndUpdateList = (data, callback = () => {}) => {
+const addGameAndUpdateList = (data, callback = () => {}) => {
     const validatedData = validateNewProject(data)
     sendResponse('add-game', validatedData, () => {
         updateListGamesFromServer(callback)
@@ -39,23 +39,26 @@ const validateNewProject = data => {
 
 
 const duplicateProjectAndUpdateList = (data, callback) => {
-    const projectData = storeGamesScreens.gamesList.filter(item => item.id === storeGamesScreens.currentGameID)[0]
-    const projectDataCopy = JSON.parse(JSON.stringify(toJS(projectData)))
+    const gameDataCopy = JSON.parse(JSON.stringify(toJS(storeGamesScreens.getCurrentGameData())))
 
-    duplicateScreens(projectDataCopy.id, screens => {
-        const newProjectId = 'game_id_' + Math.floor(Math.random() * 1000000000)
-        const newProjectData = {
-            ...projectDataCopy,
+    duplicateScreens(gameDataCopy.id, screens => {
+        const newGameId = 'game_id_' + Math.floor(Math.random() * 1000000000)
+        const newGameData = {
+            ...gameDataCopy,
             name: data.name,
-            id: newProjectId,
+            id: newGameId,
             screens,
         }
-        addProjectAndUpdateList(newProjectData, callback)
+        addGameAndUpdateList(newGameData, action(() => {
+            storeGamesScreens.currentScreenID = null
+            storeGamesScreens.currentGameID = newGameId
+            callback()
+        }))
     })
 }
 
 
-export const editProjectAndUpdateList = (data, callback) => {
+export const editGameAndUpdateList = (data, callback) => {
     sendResponse('edit-game', data, () => {
         updateListGamesFromServer()
         callback()
@@ -63,7 +66,7 @@ export const editProjectAndUpdateList = (data, callback) => {
 }
 
 
-const removeProjectAndUpdateList = (data, callback) => {
+const removeGameAndUpdateList = (data, callback) => {
     deleteScreens(data.id, () => {
         sendResponse('remove-game', { id: data.id }, () => {
             updateListGamesFromServer(callback)
@@ -77,7 +80,7 @@ updateListGamesFromServer()
 
 /** ACTIONS ON HTML ****************************************************************/
 
-const openPopupAddProject = action(() => {
+const openPopupAddGame = action(() => {
     storeGamesScreens.currentGameID = null
     storePopup.setData(
         [
@@ -89,40 +92,42 @@ const openPopupAddProject = action(() => {
             if (data[2] === '') {
                 return;
             }
-            addProjectAndUpdateList({ name: data[2] }, () => storePopup.clearAll())
+            addGameAndUpdateList({ name: data[2] }, () => {
+                storePopup.clearAll()
+            })
         },
         action(() => storePopup.clearAll()),
     )
 })
 
 
-const openPopupEditProject = action(() => {
-    const currentProject = storeGamesScreens.gamesList.filter(item => item.id === storeGamesScreens.currentGameID)[0]
+const openPopupEditGame = action(() => {
+    const currentGameData = storeGamesScreens.getCurrentGameData()
     storePopup.setData(
         [
             { type: 'title', val: 'edit game name:', },
-            { type: 'text', val: currentProject.name, },
-            { type: 'input', val: currentProject.name, },
+            { type: 'text', val: currentGameData.name, },
+            { type: 'input', val: currentGameData.name, },
         ],
         data => {
-            const copyProjectData = JSON.parse(JSON.stringify(currentProject))
-            copyProjectData.name = data[2]
-            editProjectAndUpdateList(copyProjectData, () => storePopup.clearAll())
+            const gameDataCopy = JSON.parse(JSON.stringify(currentGameData))
+            gameDataCopy.name = data[2]
+            editGameAndUpdateList(gameDataCopy, () => storePopup.clearAll())
         },
         action(() => storePopup.clearAll()),
     )
 })
 
-const openPopupDelProject = action(() => {
-    const currentProject = storeGamesScreens.gamesList.filter(item => item.id === storeGamesScreens.currentGameID)[0]
-    const copyGameData = JSON.parse(JSON.stringify(toJS(currentProject)))
+const openPopupDelGame = action(() => {
+    const currentGameData = storeGamesScreens.getCurrentGameData()
+    const copyGameData = JSON.parse(JSON.stringify(toJS(currentGameData)))
     storePopup.setData(
         [
             {type: 'title', val: 'delete game:',},
             {type: 'text', val: copyGameData.name ,},
         ],
         () => {
-            removeProjectAndUpdateList(copyGameData, action(() => {
+            removeGameAndUpdateList(copyGameData, action(() => {
                 storeGamesScreens.currentGameID = null
                 storePopup.clearAll()
             }))
@@ -131,17 +136,17 @@ const openPopupDelProject = action(() => {
     )
 })
 
-const openPopupDuplicateProject = action(() => {
-    const currentProjectName = storeGamesScreens.gamesList.filter(item => item.id === storeGamesScreens.currentGameID)[0].name
+const openPopupDuplicateGame = action(() => {
+    const currentGameData = storeGamesScreens.getCurrentGameData()
     storePopup.setData(
         [
             { type: 'title', val: 'duplicate game:' },
-            { type: 'text', val: currentProjectName, },
+            { type: 'text', val: currentGameData.name, },
             { type: 'text', val: 'new name:', },
-            { type: 'input', val: currentProjectName, },
+            { type: 'input', val: currentGameData.name, },
         ],
         action(data => {
-            if (data[3] === currentProjectName) {
+            if (data[3] === currentGameData.name) {
                 return;
             }
             duplicateProjectAndUpdateList({ name: data[3] }, () => storePopup.clearAll())
@@ -154,23 +159,23 @@ const openPopupDuplicateProject = action(() => {
 
 /** HTML *****************************************************************/
 
-const ProjectsListView = observer(() => {
+const GamesListView = observer(() => {
     return (
         <div>
             <div>
-                projects:
+                games:
                 <div className='h-10' />
                 <div className='list'>
                     {storeGamesScreens.gamesList.map((project, i) => (
-                        <ProjectView projectItem={project} key={Math.floor(Math.random() * 1000000000)} />
+                        <ProjectView gameItem={project} key={Math.floor(Math.random() * 1000000000)} />
                     ))}
                 </div>
 
                 <div className='h-50' />
 
                 <AppButton
-                    val='add new project'
-                    callBackClick={openPopupAddProject}/>
+                    val='add new game'
+                    callBackClick={openPopupAddGame}/>
             </div>
         </div>
     )
@@ -179,25 +184,25 @@ const ProjectsListView = observer(() => {
 
 
 
-const ProjectView = observer(({ projectItem }) => {
-    const isCurrent = storeGamesScreens.currentGameID === projectItem.id
+const ProjectView = observer(({ gameItem }) => {
+    const isCurrent = storeGamesScreens.currentGameID === gameItem.id
     return (
         <div>
             {isCurrent && <div className='h-10'/>}
 
             <AppButton
-                val={projectItem.name}
+                val={gameItem.name}
                 classNameCustom={isCurrent ? 'current' : ''}
                 callBackClick={action(() => {
                     setCurrentScreen(null)
-                    storeGamesScreens.currentGameID = projectItem.id
+                    storeGamesScreens.currentGameID = gameItem.id
                 })} />
 
             {isCurrent &&
                 <div className='inline stretch'>
-                    <AppButton val={'edit'} callBackClick={openPopupEditProject} />
-                    <AppButton val={'del'} callBackClick={openPopupDelProject} />
-                    <AppButton val={'duplicate'} callBackClick={openPopupDuplicateProject} />
+                    <AppButton val={'edit'} callBackClick={openPopupEditGame} />
+                    <AppButton val={'del'} callBackClick={openPopupDelGame} />
+                    <AppButton val={'duplicate'} callBackClick={openPopupDuplicateGame} />
                </div>}
 
             {isCurrent && <div className='h-10'/>}
@@ -208,4 +213,4 @@ const ProjectView = observer(({ projectItem }) => {
 
 
 
-export const createViewProjectsList = () => (<ProjectsListView />)
+export const createViewGamesList = () => (<GamesListView />)
